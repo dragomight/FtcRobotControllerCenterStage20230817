@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.BillsUsedOpModeEmporium;
+package org.firstinspires.ftc.teamcode.BillsNonSelfAwareOpModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -38,11 +38,18 @@ public class OneLowPrice extends LinearOpMode {
         while (opModeIsActive()) {
             telemetry.addData("Scraping the bottom of the barrel ", true);
 
-            if (runtime.milliseconds() < 1900) {
+            if (runtime.milliseconds() < 1800) {
                 frontRight.setPower(.5);
                 backRight.setPower(.5);
                 backLeft.setPower(.5);
                 frontLeft.setPower(.5);
+            }
+
+            else if (runtime.milliseconds() > 1800 && runtime.milliseconds() < 2000) {
+                frontRight.setPower(-.5);
+                backRight.setPower(-.5);
+                backLeft.setPower(-.5);
+                frontLeft.setPower(-.5);
             }
 
             //else if (runtime.milliseconds() < 3000) {
