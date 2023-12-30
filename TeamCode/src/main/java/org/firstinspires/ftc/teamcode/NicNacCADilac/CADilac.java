@@ -101,7 +101,7 @@ public class CADilac {
         gamePadState2.update(gamepad2, false);
         telemetry.addData("Alt mode:", gamePadState1.altMode);
 
-        sensors.update(true);
+        sensors.update(false);
 
         // read and update the actuators
         actuators.update(false);

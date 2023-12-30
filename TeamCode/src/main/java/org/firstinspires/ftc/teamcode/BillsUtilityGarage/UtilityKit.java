@@ -14,6 +14,13 @@ public class UtilityKit {
         return input;
     }
 
+    public static int signum(double number) {
+        if (number == 0) {
+            return 0;
+        }
+        return (int)(number/Math.abs(number));
+    }
+
 //    static public int driveDistanceToTicks (double distance, UnitOfDistance unitOfDistance) { // cm
 //        if (unitOfDistance == UnitOfDistance.CM) {
 //            return driveDegreesToTicks(distance * (360 / wheelCirCm));

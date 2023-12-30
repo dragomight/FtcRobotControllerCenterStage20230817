@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.BillsEs.DCMotorWriteMode;
+import org.firstinspires.ftc.teamcode.BillsYarm.Yoint;
 import org.firstinspires.ftc.teamcode.GlyphidSlammer.GlyphidGuts;
 
 import java.util.List;
@@ -70,10 +71,10 @@ public class CADilacActuators { // I assure you, these actuators were not stolen
             backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-            frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
         catch (Exception e) {
             Log.e("Actuators", "Drivetrain dc motors failed to initialize");
@@ -92,16 +93,6 @@ public class CADilacActuators { // I assure you, these actuators were not stolen
 
             joint1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             joint2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-            // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
-            allHubs = hardwareMap.getAll(LynxModule.class);
-
-            timer = new ElapsedTime();
-
-            // Important Step 3: Option B. Set all Expansion hubs to use the MANUAL Bulk Caching mode
-            for (LynxModule module : allHubs) {
-                module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-            }
         }
         catch (Exception e) {
             Log.e("Actuators: initialize", "Arm dc motors failed to initialize");
@@ -115,6 +106,16 @@ public class CADilacActuators { // I assure you, these actuators were not stolen
             System.out.println("Servos failed to initialize");
             Log.e("Actuators", "Servo motors failed to initialize");
             Log.e("Actuators", e.toString());
+        }
+
+        // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
+        allHubs = hardwareMap.getAll(LynxModule.class);
+
+        timer = new ElapsedTime();
+
+        // Important Step 3: Option B. Set all Expansion hubs to use the MANUAL Bulk Caching mode
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
     }
 
@@ -131,15 +132,18 @@ public class CADilacActuators { // I assure you, these actuators were not stolen
 
         //UPDOOT
         cadilac.cinnamonController.update(verbose);
-        cadilac.yarmController.update(verbose);
+        cadilac.yarmController.update(true);
 
         // SET THE DC MOTORS AND SERVOS
         set();
     }
 
     private void read() {
-        cadilac.yarm.joint1Ticks = joint1.getCurrentPosition();
-        cadilac.yarm.joint2Ticks = joint2.getCurrentPosition();
+        cadilac.yarm.joint1.updateTicks(joint1.getCurrentPosition());
+        cadilac.yarm.joint2.updateTicks(joint2.getCurrentPosition());
+        cadilac.yarm.joint1.updateTicksPerSecond(joint1.getVelocity());
+        cadilac.yarm.joint2.updateTicksPerSecond(joint2.getVelocity());
+        cadilac.yarm.calculateEndpoint();
 
         cadilac.cinnamonCar.frontRightTicks = frontRight.getCurrentPosition();
         cadilac.cinnamonCar.backRightTicks = frontRight.getCurrentPosition();
@@ -155,27 +159,13 @@ public class CADilacActuators { // I assure you, these actuators were not stolen
             launchMan.setPosition(0);
         }
 
-        //joint1.setVelocity(cadilac.yarm.joint1Velocity);
-        //joint2.setVelocity(cadilac.yarm.joint2Velocity);\
-
-        joint1.setTargetPosition(cadilac.yarm.joint1Target);
-        joint2.setTargetPosition(cadilac.yarm.joint2Target);
-
-        joint1.setPower(1);
-        joint2.setPower(1);
-
-        joint1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        joint2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        joint1.setVelocity(Yoint.degreesToTicks(cadilac.yarm.joint1Velocity));
+        joint2.setVelocity(Yoint.degreesToTicks(cadilac.yarm.joint2Velocity));
 
         // Send calculated power to wheels
-        //frontRight.setPower(cadilac.cinnamonCar.frontRightPower);
-        //backRight.setPower(cadilac.cinnamonCar.backRightPower);
-        //backLeft.setPower(cadilac.cinnamonCar.backLeftPower);
-        //frontLeft.setPower(cadilac.cinnamonCar.frontLeftPower);
-
-        frontRight.setVelocity(cadilac.cinnamonCar.frontRightVelocity);
-        backRight.setVelocity(cadilac.cinnamonCar.backRightVelocity);
-        backLeft.setVelocity(cadilac.cinnamonCar.backLeftVelocity);
-        frontLeft.setVelocity(cadilac.cinnamonCar.frontLeftVelocity);
+        frontRight.setPower(cadilac.cinnamonCar.frontRightPower);
+        backRight.setPower(cadilac.cinnamonCar.backRightPower);
+        backLeft.setPower(cadilac.cinnamonCar.backLeftPower);
+        frontLeft.setPower(cadilac.cinnamonCar.frontLeftPower);
     }
 }

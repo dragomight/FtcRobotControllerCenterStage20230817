@@ -4,99 +4,95 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.BillsSystemsForSpareChange.GamePadState;
+import org.firstinspires.ftc.teamcode.BillsUtilityGarage.Vector2D;
 
 import java.util.ArrayList;
 
 public class YarmController {
-    private final int VELOCITY = Yarm.degreesToTicks(45.0/2);
-
-    private ArrayList<Integer> joint1Record;
-    private ArrayList<Integer> joint2Record;
-
-    private ElapsedTime checkTime;
+    Vector2D point1;
+    Vector2D point2;
 
     Telemetry telemetry;
     GamePadState gamePadState;
     Yarm yarm;
+
+    private boolean stick;
 
     public void initialize(GamePadState gamePadState, Yarm yarm, Telemetry telemetry) {
         this.telemetry = telemetry;
         this.gamePadState = gamePadState;
         this.yarm = yarm;
 
-        joint1Record = new ArrayList<>();
-        joint2Record = new ArrayList<>();
-
-        checkTime = new ElapsedTime();
+        point1 = new Vector2D();
+        point2 = new Vector2D();
     }
 
     public void update(boolean verbose) {
-        if (gamePadState.y) {
-           yarm.launch = true;
+        //yarm.launch = gamePadState.y; // TODO: Make a new location for launcher control
+
+        if (gamePadState.altMode) {
+            yarm.mode = YarmMode.MOVE_BY_ENDPOINT;
+
+            if (yarm.arrival1 && yarm.arrival2) {
+                stick = !stick;
+            }
+
+            if (gamePadState.rightBumper) {
+                if (stick) {
+                    yarm.endPointTarget.set(point1);
+                }
+                else {
+                    yarm.endPointTarget.set(point2);
+                }
+            }
         }
         else {
-            yarm.launch = false;
+            yarm.mode = YarmMode.MOVE_BY_JOINTS;
+            if (gamePadState.dPadLeft) {
+                yarm.joint1Target = 0;
+                yarm.joint2Target = 0;
+            }
+            else if (gamePadState.dPadRight) {
+                yarm.joint1Target = yarm.joint1.homeAngle;
+                yarm.joint2Target = yarm.joint2.homeAngle;
+            }
+            else if (gamePadState.dPadUp) {
+                yarm.joint1Target += 5;
+            }
+            else if (gamePadState.dPadDown) {
+                yarm.joint1Target -= 5;
+            }
+
+            if (gamePadState.y) {
+                yarm.joint2Target += 5;
+            }
+            else if (gamePadState.a) {
+                yarm.joint2Target -= 5;
+            }
+
+            if (gamePadState.x) {
+                point1 = yarm.endpoint;
+            }
+            if (gamePadState.b) {
+                point2 = yarm.endpoint;
+            }
         }
 
-        if (gamePadState.dPadUp) { // Ready position
-            yarm.joint1Target = Yarm.degreesToTicks(80);
-            yarm.joint2Target = Yarm.degreesToTicks(-120);
-        }
-
-        if (gamePadState.dPadLeft) { // Pull
-            yarm.joint1Target = Yarm.degreesToTicks(50);
-            yarm.joint2Target = Yarm.degreesToTicks(-50);
-        }
-
-        if (gamePadState.dPadDown) { // Rest
-            yarm.joint1Target = Yarm.degreesToTicks(0);
-            yarm.joint2Target = Yarm.degreesToTicks(0);
-        }
-
-        /*
-        if (gamePadState.dPadUp) {
-            yarm.joint1Velocity = VELOCITY;
-        }
-        else if (gamePadState.dPadDown) {
-            yarm.joint1Velocity = -VELOCITY;
-        }
-        else {
-            yarm.joint1Velocity = 0;
-        }
-
-        if (gamePadState.y) {
-            yarm.joint2Velocity = VELOCITY;
-        }
-        else if (gamePadState.a) {
-            yarm.joint2Velocity = -VELOCITY;
-        }
-        else {
-            yarm.joint2Velocity = 0;
-        }
-
-        if (gamePadState.x) {
-            record();
-        }
-
-         */
+        yarm.updateVelocities();
 
         if (verbose) {
             telemetry.addData("Target1 ", yarm.joint1Target);
             telemetry.addData("Target2 ", yarm.joint2Target);
 
-            for (int i = 0; i < joint1Record.size(); i++) {
-                telemetry.addData("--------------------- ", i);
-                telemetry.addData("Joint 1 ticks", joint1Record.get(i));
-                telemetry.addData("Joint 2 ticks", joint2Record.get(i));
-            }
-        }
-    }
+            telemetry.addData("Target point: ", yarm.endPointTarget.toString());
 
-    public void record() {
-        if (checkTime.seconds() > 1) {
-            joint1Record.add(yarm.joint1Ticks);
-            joint2Record.add(yarm.joint2Ticks);
-            checkTime.reset();
+            telemetry.addData("Endpoint: ", yarm.endpoint.toString());
+
+            telemetry.addData("Point1: ", point1.toString());
+            telemetry.addData("Point2: ", point2.toString());
+
+            telemetry.addData("Arrival1: ", yarm.arrival1);
+            telemetry.addData("Arrival2: ", yarm.arrival2);
         }
     }
 }
